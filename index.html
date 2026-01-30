@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Number Quest - Free Online Number Guessing Game | Play Now</title>
+    <meta name="description" content="Play the ultimate free number guessing game online! Daily challenges, leaderboards, hot/cold meter. Guess the number game with multiple levels!">
+    <meta name="keywords" content="guess the number game, number guessing game online, free number game, play guessing game, daily number challenge">
+    <meta property="og:title" content="Number Quest - Guess The Number Game">
+    <meta property="og:description" content="Free online number guessing game with daily challenges and leaderboard!">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Sora:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        :root {
+            --primary: #0F172A; --secondary: #1E293B; --accent: #3B82F6; --success: #10B981;
+            --warning: #F59E0B; --danger: #EF4444; --bg-light: #F8FAFC; --bg-white: #FFFFFF;
+            --text-primary: #0F172A; --text-secondary: #64748B; --border: #E2E8F0;
+        }
+        
+        [data-theme="dark"] {
+            --primary: #F8FAFC; --bg-light: #1E293B; --bg-white: #0F172A;
+            --text-primary: #F8FAFC; --text-secondary: #94A3B8; --border: #334155;
+        }
+        
+        body {
+            font-family: 'Sora', sans-serif; background: var(--bg-light); min-height: 100vh;
+            display: flex; justify-content: center; align-items: center; padding: 20px;
+            color: var(--text-primary); transition: all 0.3s;
+        }
+        
+        .container {
+  max-width: 680px;
+  width: 100%;
+  margin: auto;
+  padding: clamp(12px, 4vw, 20px);
+}
+
+        
+        .logo {
+            font-family: 'Space Mono', monospace; font-size: 2.5em; font-weight: 700;
+            text-align: center; margin-bottom: 8px; animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.02); } }
+        
+        .tagline { text-align: center; font-size: 0.95em; color: var(--text-secondary); margin-bottom: 32px; }
+        
+        .game-card {
+            background: var(--bg-white); border-radius: 16px;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); overflow: hidden;
+        }
+        
+        .stats-container {
+            display: grid; grid-template-columns: repeat(3, 1fr);
+            background: var(--primary); color: white; padding: 24px;
+        }
+        
+        .stat-item { text-align: center; padding: 0 12px; }
+        .stat-item:not(:last-child) { border-right: 1px solid rgba(255,255,255,0.2); }
+        .stat-value {
+            display: block; font-size: 2em; font-weight: 800;
+            font-family: 'Space Mono', monospace;
+        }
+        .stat-label {
+            display: block; font-size: 0.75em; text-transform: uppercase;
+            letter-spacing: 0.05em; opacity: 0.8; margin-top: 4px;
+        }
+        
+        .content { padding: 32px; }
+        
+        .theme-btns {
+            display: flex; gap: 8px; justify-content: center; margin-bottom: 20px;
+        }
+        .theme-btn {
+            width: 36px; height: 36px; border-radius: 50%; border: 2px solid var(--border);
+            cursor: pointer; transition: all 0.2s;
+        }
+        .theme-btn:hover { transform: scale(1.1); }
+        .theme-btn.active { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); }
+        .theme-btn[data-theme="light"] { background: linear-gradient(135deg, #F8FAFC, #E2E8F0); }
+        .theme-btn[data-theme="dark"] { background: linear-gradient(135deg, #1E293B, #0F172A); }
+        
+        .daily-banner {
+            background: linear-gradient(135deg, var(--accent), var(--success));
+            color: white; padding: 16px; border-radius: 12px; margin-bottom: 20px;
+            text-align: center; cursor: pointer; transition: transform 0.2s;
+        }
+        .daily-banner:hover { transform: translateY(-2px); }
+        
+        .start-screen { text-align: center; padding: 40px 20px; }
+        .btn-start {
+            padding: 20px 60px; background: var(--accent); color: white; border: none;
+            border-radius: 16px; font-size: 1.3em; font-weight: 700; cursor: pointer;
+            transition: all 0.3s; margin-top: 24px; animation: bounce 2s infinite;
+        }
+        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+        .btn-start:hover { background: var(--success); transform: scale(1.05); }
+        
+        .level-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px;
+        }
+        .level-card {
+            background: var(--bg-light); border: 2px solid var(--border); border-radius: 12px;
+            padding: 16px; text-align: center; cursor: pointer; transition: all 0.2s;
+        }
+        .level-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+        .level-card.active { background: var(--accent); border-color: var(--accent); color: white; }
+        
+        .game-status {
+            background: var(--bg-light); border-radius: 12px; padding: 20px;
+            margin-bottom: 20px; text-align: center; min-height: 80px;
+        }
+        
+        .hot-cold-meter { margin: 16px 0; }
+        .meter-bar {
+            height: 20px; background: linear-gradient(to right, #3B82F6, #10B981, #F59E0B, #EF4444);
+            border-radius: 10px; position: relative;
+        }
+        .meter-indicator {
+            position: absolute; top: -5px; width: 4px; height: 30px;
+            background: white; border: 2px solid var(--primary); border-radius: 2px;
+            transition: left 0.3s; box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+        .meter-label { font-size: 0.9em; font-weight: 600; margin-top: 8px; }
+        
+        .riddle-section {
+            background: var(--bg-white); border: 2px solid var(--accent);
+            border-radius: 12px; padding: 16px 20px; margin-bottom: 20px;
+        }
+        
+        .input-group { display: flex; gap: 12px; margin-bottom: 20px; }
+        .guess-input {
+            flex: 1; padding: 20px; border: 3px solid var(--border); border-radius: 12px;
+            font-family: 'Space Mono', monospace; font-size: 1.4em; font-weight: 700;
+            text-align: center; background: var(--bg-white); color: var(--text-primary);
+        }
+        .guess-input:focus {
+            outline: none; border-color: var(--accent);
+            box-shadow: 0 0 0 4px rgba(59,130,246,0.15); transform: scale(1.02);
+        }
+        
+        .btn-guess {
+            padding: 20px 40px; background: var(--accent); color: white; border: none;
+            border-radius: 12px; font-size: 1.1em; font-weight: 700; cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-guess:hover { background: var(--success); transform: translateY(-2px); }
+        
+        .message {
+            padding: 16px; border-radius: 12px; font-weight: 600; margin-bottom: 20px;
+        }
+        .message.success { background: #DCFCE7; color: #166534; border: 2px solid var(--success); }
+        .message.info { background: #DBEAFE; color: #1E40AF; border: 2px solid var(--accent); }
+        .message.warning { background: #FEF3C7; color: #92400E; border: 2px solid var(--warning); }
+        
+        .guesses-grid { display: flex; flex-wrap: wrap; gap: 8px; min-height: 40px; margin-bottom: 20px; }
+        .guess-chip {
+            padding: 8px 16px; border-radius: 8px; font-family: 'Space Mono', monospace;
+            font-weight: 700; animation: popIn 0.3s;
+        }
+        @keyframes popIn { 0% { opacity: 0; transform: scale(0); } 100% { opacity: 1; transform: scale(1); } }
+        .guess-chip.low { background: #FEF3C7; color: #92400E; }
+        .guess-chip.high { background: #FEE2E2; color: #991B1B; }
+        
+        .controls {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px;
+        }
+        .btn-control {
+            padding: 12px; background: var(--bg-white); border: 2px solid var(--border);
+            border-radius: 10px; font-weight: 600; cursor: pointer; transition: all 0.2s;
+        }
+        .btn-control:hover { border-color: var(--accent); transform: translateY(-2px); }
+        .btn-donate {
+            background: linear-gradient(135deg, var(--success), var(--accent));
+            color: white; border: none; grid-column: 1 / -1;
+        }
+        
+        .leaderboard-section {
+            background: var(--bg-light); border-radius: 12px; padding: 24px; margin-bottom: 20px;
+        }
+        .leaderboard-entry {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 12px 16px; background: var(--bg-white); border-radius: 8px;
+            margin-bottom: 8px;
+        }
+        
+        .achievements-grid {
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
+        }
+        .achievement {
+            background: var(--bg-white); border: 2px solid var(--border);
+            border-radius: 10px; padding: 16px 12px; text-align: center;
+        }
+        .achievement.unlocked { border-color: var(--success); background: #DCFCE7; }
+        .achievement.locked { opacity: 0.4; }
+        .achievement-icon { font-size: 2em; display: block; margin-bottom: 8px; }
+        
+        .modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15,23,42,0.8); z-index: 1000; justify-content: center;
+            align-items: center; backdrop-filter: blur(4px);
+        }
+        .modal.active { display: flex; }
+        .modal-content {
+            background: var(--bg-white); border-radius: 16px; max-width: 600px;
+            width: 90%; max-height: 90vh; overflow-y: auto;
+        }
+        .modal-header {
+            padding: 24px; border-bottom: 2px solid var(--border);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .modal-title { font-size: 1.5em; font-weight: 800; }
+        .modal-close {
+            font-size: 1.5em; cursor: pointer; background: none; border: none;
+            padding: 8px; border-radius: 8px;
+        }
+        .modal-close:hover { background: var(--bg-light); }
+        .modal-body { padding: 32px; }
+        
+        .donation-content { text-align: center; }
+        .qr-code { margin: 24px auto; padding: 20px; background: white; border-radius: 12px; display: inline-block; }
+        .upi-id {
+            font-family: 'Space Mono', monospace; font-size: 1.2em; font-weight: 700;
+            color: var(--accent); margin: 16px 0; padding: 12px;
+            background: var(--bg-light); border-radius: 8px;
+        }
+        .btn-upi {
+            padding: 16px 32px; background: linear-gradient(135deg, #5f259f, #7c3aed);
+            color: white; border: none; border-radius: 12px; font-size: 1.1em;
+            font-weight: 700; cursor: pointer; margin-top: 16px;
+        }
+        .btn-upi:hover { transform: translateY(-2px); }
+        
+        @media (max-width: 640px) {
+  .level-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 420px) {
+  .level-grid {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 520px) {
+  .input-group {
+    flex-direction: column;
+  }
+
+  .btn-guess {
+    width: 100%;
+  }
+
+  .guess-input {
+    font-size: 1.2em;
+  }
+}
+@media (max-width: 768px) {
+  .achievements-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .achievements-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (max-width: 480px) {
+  .modal-content {
+    width: 95%;
+    border-radius: 12px;
+  }
+
+  .modal-body {
+    padding: 20px;
+  }
+}
+.qr-code canvas,
+.qr-code img {
+  max-width: 100%;
+  height: auto;
+}
+@media (max-width: 480px) {
+  .stats-container {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    text-align: center;
+  }
+
+  .stat-item:not(:last-child) {
+    border-right: none;
+    border-bottom: 1px solid rgba(255,255,255,0.2);
+    padding-bottom: 12px;
+  }
+}
+
+    </style>
+</head>
+<body data-theme="light">
+    <div class="container">
+        <div class="logo">🎯 NUMBER QUEST</div>
+        <div class="tagline">Free Number Guessing Game Online • Daily Challenges • Compete!</div>
+        
+        <div class="game-card">
+            <div class="stats-container">
+                <div class="stat-item"><span class="stat-value" id="score">0</span><span class="stat-label">Score</span></div>
+                <div class="stat-item"><span class="stat-value" id="streak">0</span><span class="stat-label">Streak</span></div>
+                <div class="stat-item"><span class="stat-value" id="best">0</span><span class="stat-label">Best</span></div>
+            </div>
+            
+            <div class="content">
+                <div class="theme-btns">
+                    <div class="theme-btn active" data-theme="light" onclick="setTheme('light')"></div>
+                    <div class="theme-btn" data-theme="dark" onclick="setTheme('dark')"></div>
+                </div>
+                
+                <div class="daily-banner" onclick="startDaily()">
+                    <h3>🔥 Today's Daily Challenge 🔥</h3>
+                    <p id="dailyText">Complete today's challenge!</p>
+                </div>
+                
+                <div id="startScreen" class="start-screen">
+                    <h2 style="margin-bottom:20px">Welcome to Number Quest!</h2>
+                    <p style="margin-bottom:24px;color:var(--text-secondary)">Choose your level and start guessing!</p>
+                    <div class="level-grid" id="levelStart">
+                        <div class="level-card" data-level="easy" onclick="selectStart('easy')">
+                            <div><strong>Easy</strong></div><div>1-50</div><div style="font-size:0.8em">10 tries</div>
+                        </div>
+                        <div class="level-card" data-level="medium" onclick="selectStart('medium')">
+                            <div><strong>Medium</strong></div><div>1-100</div><div style="font-size:0.8em">12 tries</div>
+                        </div>
+                        <div class="level-card" data-level="hard" onclick="selectStart('hard')">
+                            <div><strong>Hard</strong></div><div>1-200</div><div style="font-size:0.8em">15 tries</div>
+                        </div>
+                        <div class="level-card" data-level="expert" onclick="selectStart('expert')">
+                            <div><strong>Expert</strong></div><div>1-500</div><div style="font-size:0.8em">18 tries</div>
+                        </div>
+                        <div class="level-card" data-level="insane" onclick="selectStart('insane')">
+                            <div><strong>Insane</strong></div><div>1-1000</div><div style="font-size:0.8em">20 tries</div>
+                        </div>
+                        <div class="level-card" data-level="god" onclick="selectStart('god')">
+                            <div><strong>God Mode</strong></div><div>1-10000</div><div style="font-size:0.8em">25 tries</div>
+                        </div>
+                    </div>
+                    <button class="btn-start" onclick="startGame()">🚀 START GAME</button>
+                </div>
+                
+                <div id="gameScreen" style="display:none">
+                    <div class="game-status">
+                        <div style="font-family:'Space Mono';font-size:1.1em;font-weight:700;margin-bottom:8px" id="timer">00:00</div>
+                        <div style="color:var(--warning);font-weight:600" id="attempts"></div>
+                        <div style="font-size:1.1em;font-weight:600" id="hint"></div>
+                    </div>
+                    
+                    <div class="hot-cold-meter" id="meter" style="display:none">
+                        <div class="meter-bar"><div class="meter-indicator" id="indicator"></div></div>
+                        <div class="meter-label" id="meterLabel">Make your first guess!</div>
+                    </div>
+                    
+                    <div class="riddle-section">
+                        <div style="font-size:0.75em;font-weight:700;color:var(--accent);margin-bottom:8px">🧩 RIDDLE CLUE</div>
+                        <div id="riddle"></div>
+                        <button class="btn-control" style="margin-top:12px;width:100%" onclick="getHint()" id="hintBtn">
+                            💡 Get Hint (-100 pts)
+                        </button>
+                    </div>
+                    
+                    <div class="input-group">
+                        <input type="number" class="guess-input" id="input" placeholder="Your guess">
+                        <button class="btn-guess" onclick="guess()">🎯 GUESS</button>
+                    </div>
+                    
+                    <div id="message"></div>
+                    <div class="guesses-grid" id="guesses"></div>
+                </div>
+                
+                <div class="leaderboard-section">
+                    <h3 style="text-align:center;margin-bottom:16px">🏆 Leaderboard</h3>
+                    <div id="leaderboard"></div>
+                </div>
+                
+                <div class="controls">
+                    <button class="btn-control" onclick="showHelp()">📖 Help</button>
+                    <button class="btn-control" onclick="newGame()">🔄 New</button>
+                    <button class="btn-control" onclick="toggleSound()"><span id="sound">🔊</span></button>
+                    <button class="btn-donate" onclick="showDonate()">💝 Support Us - Buy Me Coffee</button>
+                </div>
+                
+                <div style="background:var(--bg-light);border-radius:12px;padding:24px">
+                    <h4 style="text-align:center;margin-bottom:16px">🏆 Achievements</h4>
+                    <div class="achievements-grid" id="achievements"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modals -->
+    <div class="modal" id="helpModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">📖 How to Play</h2>
+                <button class="modal-close" onclick="closeModal('helpModal')">✕</button>
+            </div>
+            <div class="modal-body">
+                <div style="margin-bottom:20px;padding:20px;background:var(--bg-light);border-radius:12px">
+                    <h3 style="margin-bottom:12px">🎯 The Goal</h3>
+                    <p>Guess the secret number within limited attempts! Use riddle clues and the hot/cold meter.</p>
+                </div>
+                <div style="margin-bottom:20px;padding:20px;background:var(--bg-light);border-radius:12px">
+                    <h3 style="margin-bottom:12px">🎮 Levels & Attempts</h3>
+                    <p><strong>Easy:</strong> 1-50 (10 attempts) - 1x score</p>
+                    <p><strong>Medium:</strong> 1-100 (12 attempts) - 2x score</p>
+                    <p><strong>Hard:</strong> 1-200 (15 attempts) - 3x score</p>
+                    <p><strong>Expert:</strong> 1-500 (18 attempts) - 5x score</p>
+                    <p><strong>Insane:</strong> 1-1000 (20 attempts) - 8x score</p>
+                    <p><strong>God Mode:</strong> 1-10000 (25 attempts) - 15x score</p>
+                </div>
+                <div style="margin-bottom:20px;padding:20px;background:var(--bg-light);border-radius:12px">
+                    <h3 style="margin-bottom:12px">🔥 Daily Challenge</h3>
+                    <p><strong>One number per day for everyone!</strong></p>
+                    <p>• Same number worldwide</p>
+                    <p>• Only ONE attempt</p>
+                    <p>• Compete globally</p>
+                    <p>• Resets at midnight UTC</p>
+                </div>
+                <div style="margin-bottom:20px;padding:20px;background:var(--bg-light);border-radius:12px">
+                    <h3 style="margin-bottom:12px">🌡️ Hot/Cold Meter</h3>
+                    <p>🧊 Ice Cold → ❄️ Cold → 🌤️ Warm → 🔥 Hot → 🌋 On Fire!</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="modal" id="donateModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">💝 Support Number Quest</h2>
+                <button class="modal-close" onclick="closeModal('donateModal')">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="donation-content">
+                    <h3 style="margin-bottom:16px">Enjoying the game? Buy me a coffee! ☕</h3>
+                    <p style="color:var(--text-secondary);margin-bottom:24px">
+                        Your support keeps Number Quest free and ad-free!
+                    </p>
+                    <div class="qr-code">
+                         <div id="qrcode"></div>
+                    </div>
+                    <div class="upi-id">7841811323@omni</div>
+                    <p style="color:var(--text-secondary);margin:16px 0">Scan QR or click below to pay via UPI</p>
+                    <button class="btn-upi" onclick="payUPI()">💳 Pay with UPI</button>
+                    <p style="color:var(--text-secondary);margin-top:24px;font-size:0.9em">Thank you! 🙏</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let state = {
+            target: 0, attempts: 0, maxAttempts: 10, guesses: [], score: 0, streak: 0, best: 0,
+            level: 'easy', theme: 'light', sound: true, start: 0, total: 0, timer: null,
+            riddle: null, hintUsed: false, started: false, daily: false,
+            achievements: {first: false, perfect: false, speed: false, persistent: false, streak5: false, master: false, efficient: false, lucky: false},
+            wins: {easy: 0, medium: 0, hard: 0, expert: 0, insane: 0, god: 0},
+            leaderboard: []
+        };
+        
+        const levels = {
+            easy: {max: 50, mult: 1, attempts: 10}, medium: {max: 100, mult: 2, attempts: 12},
+            hard: {max: 200, mult: 3, attempts: 15}, expert: {max: 500, mult: 5, attempts: 18},
+            insane: {max: 1000, mult: 8, attempts: 20}, god: {max: 10000, mult: 15, attempts: 25}
+        };
+        
+        const achievements = {
+            first: {icon: '🎉', name: 'First'}, perfect: {icon: '🎯', name: 'Perfect'},
+            speed: {icon: '⚡', name: 'Speed'}, persistent: {icon: '💪', name: 'Persistent'},
+            streak5: {icon: '🔥', name: 'Fire'}, master: {icon: '👑', name: 'Master'},
+            efficient: {icon: '🧠', name: 'Efficient'}, lucky: {icon: '🍀', name: 'Lucky'}
+        };
+        
+        function init() {
+            const saved = localStorage.getItem('numberQuest');
+            if (saved) state = {...state, ...JSON.parse(saved)};
+            const lb = localStorage.getItem('numberQuestLB');
+            if (lb) state.leaderboard = JSON.parse(lb);
+            setTheme(state.theme);
+            updateUI();
+            renderAchievements();
+            renderLeaderboard();
+            updateDaily();
+        }
+        
+        function save() {
+            const s = {...state}; delete s.timer;
+            localStorage.setItem('numberQuest', JSON.stringify(s));
+            localStorage.setItem('numberQuestLB', JSON.stringify(state.leaderboard));
+        }
+        
+        function setTheme(t) {
+            state.theme = t;
+            document.body.setAttribute('data-theme', t);
+            document.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('active'));
+            document.querySelector(`[data-theme="${t}"]`).classList.add('active');
+            save(); playSound('click');
+        }
+        
+        function updateDaily() {
+            const today = new Date().toISOString().split('T')[0];
+            const last = localStorage.getItem('dailyDate');
+            const text = document.getElementById('dailyText');
+            if (last === today) text.textContent = '✅ Completed! Come back tomorrow!';
+            else text.textContent = 'Complete today\'s challenge!';
+        }
+        
+        function startDaily() {
+            const today = new Date().toISOString().split('T')[0];
+            if (localStorage.getItem('dailyDate') === today) {
+                alert('Already completed today! Come back tomorrow! 🌟'); return;
+            }
+            state.daily = true; state.level = 'medium'; state.maxAttempts = 1;
+            selectStart('medium'); startGame();
+        }
+        
+        function getDailyNum() {
+            const today = new Date().toISOString().split('T')[0];
+            let seed = 0;
+            for (let i = 0; i < today.length; i++) seed += today.charCodeAt(i);
+            return (seed % 100) + 1;
+        }
+        
+        function selectStart(l) {
+            state.level = l;
+            document.querySelectorAll('#levelStart .level-card').forEach(c => {
+                c.classList.toggle('active', c.dataset.level === l);
+            });
+            playSound('click');
+        }
+        
+        function startGame() {
+            document.getElementById('startScreen').style.display = 'none';
+            document.getElementById('gameScreen').style.display = 'block';
+            state.started = true; newGame();
+        }
+        
+        function newGame() {
+            if (!state.started) return;
+            const lv = levels[state.level];
+            state.target = state.daily ? getDailyNum() : Math.floor(Math.random() * lv.max) + 1;
+            state.maxAttempts = state.daily ? 1 : lv.attempts;
+            state.attempts = 0; state.guesses = []; state.start = Date.now(); state.hintUsed = false;
+            state.riddle = genRiddle(state.target);
+            if (state.timer) clearInterval(state.timer);
+            state.timer = setInterval(updateTimer, 100);
+            document.getElementById('input').value = '';
+            document.getElementById('guesses').innerHTML = '';
+            document.getElementById('message').innerHTML = '';
+            document.getElementById('hint').textContent = `Guess 1-${lv.max.toLocaleString()}`;
+            document.getElementById('attempts').textContent = `${state.maxAttempts} attempts remaining`;
+            document.getElementById('riddle').innerHTML = state.riddle;
+            document.getElementById('hintBtn').disabled = false;
+            document.getElementById('hintBtn').textContent = '💡 Get Hint (-100 pts)';
+            document.getElementById('meter').style.display = 'none';
+            playSound('start'); save();
+        }
+        
+        function genRiddle(n) {
+            const riddles = [];
+            if (isPrime(n)) riddles.push("I am prime.");
+            riddles.push(n % 2 === 0 ? "I am even." : "I am odd.");
+            const sqrt = Math.sqrt(n);
+            if (Number.isInteger(sqrt)) riddles.push(`I am a perfect square (√${sqrt}).`);
+            if (n % 3 === 0) riddles.push("Divisible by 3.");
+            if (n % 5 === 0) riddles.push("Divisible by 5.");
+            if (n > 9) {
+                const sum = String(n).split('').reduce((s,d) => s + parseInt(d), 0);
+                riddles.push(`My digits sum to ${sum}.`);
+            }
+            const lv = levels[state.level];
+            const q = Math.floor(lv.max / 4);
+            if (n <= q) riddles.push("I'm in the first quarter.");
+            else if (n <= q*2) riddles.push("I'm in the second quarter.");
+            else if (n <= q*3) riddles.push("I'm in the third quarter.");
+            else riddles.push("I'm in the fourth quarter.");
+            return riddles.sort(() => 0.5 - Math.random()).slice(0, 3).join(' ');
+        }
+        
+        function isPrime(n) {
+            if (n < 2) return false;
+            for (let i = 2; i <= Math.sqrt(n); i++) if (n % i === 0) return false;
+            return true;
+        }
+        
+        function getHint() {
+            if (state.hintUsed) return;
+            state.score = Math.max(0, state.score - 100);
+            updateUI();
+            const n = state.target, lv = levels[state.level];
+            let hint = '';
+            const t = Math.floor(Math.random() * 3);
+            if (t === 0) {
+                const r = Math.floor(lv.max / 10), low = Math.floor(n/r)*r;
+                hint = `📊 Between ${low} and ${low+r}`;
+            } else if (t === 1) {
+                hint = `🎯 Last digit is ${n % 10}`;
+            } else {
+                if (n >= 10) {
+                    const tens = Math.floor(n/10)*10;
+                    hint = `💫 In the ${tens}s (${tens}-${tens+9})`;
+                } else hint = `💫 Single digit`;
+            }
+            document.getElementById('riddle').innerHTML += `<br><strong style="color:var(--warning)">${hint}</strong>`;
+            document.getElementById('hintBtn').disabled = true;
+            document.getElementById('hintBtn').textContent = '💡 Used';
+            state.hintUsed = true; playSound('achievement'); save();
+        }
+        
+        function updateTimer() {
+            const elapsed = Math.floor((Date.now() - state.start) / 1000);
+            const m = Math.floor(elapsed / 60), s = elapsed % 60;
+            document.getElementById('timer').textContent = 
+                `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+        }
+        
+        function updateMeter(g) {
+            const meter = document.getElementById('meter');
+            const ind = document.getElementById('indicator');
+            const label = document.getElementById('meterLabel');
+            meter.style.display = 'block';
+            const lv = levels[state.level];
+            const dist = Math.abs(g - state.target);
+            const pct = (dist / lv.max) * 100;
+            ind.style.left = `${100 - pct}%`;
+            if (pct < 5) { label.textContent = '🌋 ON FIRE!'; label.style.color = '#DC2626'; }
+            else if (pct < 15) { label.textContent = '🔥 HOT!'; label.style.color = '#EF4444'; }
+            else if (pct < 30) { label.textContent = '🌤️ WARM!'; label.style.color = '#F59E0B'; }
+            else if (pct < 50) { label.textContent = '❄️ COLD!'; label.style.color = '#3B82F6'; }
+            else { label.textContent = '🧊 ICE COLD!'; label.style.color = '#1E40AF'; }
+        }
+        
+        function guess() {
+            const g = parseInt(document.getElementById('input').value);
+            const lv = levels[state.level];
+            if (isNaN(g) || g < 1 || g > lv.max) {
+                showMsg(`Enter 1-${lv.max.toLocaleString()}`, 'warning'); playSound('error'); return;
+            }
+            if (state.guesses.includes(g)) {
+                showMsg('Already tried!', 'warning'); playSound('error'); return;
+            }
+            state.attempts++; state.total++; state.guesses.push(g);
+            const left = state.maxAttempts - state.attempts;
+            document.getElementById('attempts').textContent = `${left} attempt${left!==1?'s':''} remaining`;
+            addChip(g); updateMeter(g);
+            if (g === state.target) win();
+            else if (state.attempts >= state.maxAttempts) lose();
+            else {
+                const dir = g < state.target ? 'higher' : 'lower';
+                const emoji = g < state.target ? '📈' : '📉';
+                document.getElementById('hint').textContent = `${emoji} Try ${dir}!`;
+                showMsg(`Too ${dir==='higher'?'low':'high'}! Try ${dir}.`, 'info');
+                playSound('wrong');
+            }
+            document.getElementById('input').value = '';
+            document.getElementById('input').focus();
+            checkAchievements(); save();
+        }
+        
+        function win() {
+            if (state.timer) { clearInterval(state.timer); state.timer = null; }
+            const time = Math.floor((Date.now() - state.start) / 1000);
+            const lv = levels[state.level];
+            let pts = Math.max(1000 - (state.attempts * 50), 100);
+            pts *= lv.mult;
+            if (time < 30) pts += 500;
+            state.streak++; pts *= (1 + state.streak * 0.1);
+            state.score += Math.floor(pts); state.wins[state.level]++;
+            if (state.score > state.best) state.best = state.score;
+            if (state.daily) {
+                const today = new Date().toISOString().split('T')[0];
+                localStorage.setItem('dailyDate', today);
+                updateDaily();
+                state.leaderboard.push({score: state.score, attempts: state.attempts, time});
+                state.leaderboard.sort((a,b) => b.score - a.score);
+                state.leaderboard = state.leaderboard.slice(0, 100);
+            }
+            const m = Math.floor(time/60), s = time%60;
+            const ts = m > 0 ? `${m}m ${s}s` : `${s}s`;
+            showMsg(`🎉 Correct! Number was ${state.target}!<br>+${Math.floor(pts).toLocaleString()} pts | ${state.attempts} tries | ${ts}`, 'success');
+            document.getElementById('hint').textContent = '🏆 You won!';
+            playSound('win'); confetti();
+            checkAchievements(); updateUI(); renderLeaderboard(); save();
+            setTimeout(() => {
+                if (state.daily) { state.daily = false; alert('🎊 Daily challenge complete! Share your score!'); }
+                else if (confirm('🎊 Play again?')) newGame();
+            }, 2000);
+        }
+        
+        function lose() {
+            if (state.timer) { clearInterval(state.timer); state.timer = null; }
+            state.streak = 0;
+            showMsg(`😢 Out of attempts! Number was ${state.target}.`, 'warning');
+            document.getElementById('hint').textContent = '💔 Out of attempts!';
+            playSound('error'); updateUI(); save();
+            if (state.daily) {
+                const today = new Date().toISOString().split('T')[0];
+                localStorage.setItem('dailyDate', today);
+                updateDaily(); state.daily = false;
+            }
+            setTimeout(() => { if (confirm('💪 Try again?')) newGame(); }, 2000);
+        }
+        
+        function addChip(g) {
+            const chip = document.createElement('div');
+            chip.className = `guess-chip ${g < state.target ? 'low' : 'high'}`;
+            chip.textContent = g;
+            document.getElementById('guesses').appendChild(chip);
+        }
+        
+        function showMsg(txt, type) {
+            document.getElementById('message').innerHTML = `<div class="message ${type}">${txt}</div>`;
+        }
+        
+        function updateUI() {
+            document.getElementById('score').textContent = state.score.toLocaleString();
+            document.getElementById('streak').textContent = state.streak;
+            document.getElementById('best').textContent = state.best.toLocaleString();
+        }
+        
+        function renderLeaderboard() {
+            const el = document.getElementById('leaderboard');
+            el.innerHTML = '';
+            const top5 = state.leaderboard.slice(0, 5);
+            if (top5.length === 0) {
+                el.innerHTML = '<p style="text-align:center;color:var(--text-secondary);padding:20px">No entries yet!</p>';
+                return;
+            }
+            top5.forEach((e, i) => {
+                const div = document.createElement('div');
+                div.className = 'leaderboard-entry';
+                const rank = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i+1}`;
+                div.innerHTML = `
+                    <div style="font-family:'Space Mono';font-weight:700;font-size:1.2em;color:var(--accent);min-width:40px">${rank}</div>
+                    <div style="flex:1;font-weight:600">Player (${e.attempts} tries)</div>
+                    <div style="font-family:'Space Mono';font-weight:700;color:var(--success)">${e.score.toLocaleString()}</div>
+                `;
+                el.appendChild(div);
+            });
+        }
+        
+        function renderAchievements() {
+            const grid = document.getElementById('achievements');
+            grid.innerHTML = '';
+            Object.keys(achievements).forEach(k => {
+                const a = achievements[k], unlocked = state.achievements[k];
+                const div = document.createElement('div');
+                div.className = `achievement ${unlocked ? 'unlocked' : 'locked'}`;
+                div.innerHTML = `<span class="achievement-icon">${a.icon}</span><div style="font-size:0.7em;font-weight:600">${a.name}</div>`;
+                grid.appendChild(div);
+            });
+        }
+        
+        function checkAchievements() {
+            let unlocked = false;
+            if (state.wins[state.level] >= 1 && !state.achievements.first) { state.achievements.first = true; unlocked = true; }
+            if (state.attempts === 1 && !state.achievements.perfect) { state.achievements.perfect = true; unlocked = true; }
+            const t = Math.floor((Date.now() - state.start) / 1000);
+            if (t < 10 && state.guesses.includes(state.target) && !state.achievements.speed) {
+                state.achievements.speed = true; unlocked = true;
+            }
+            if (state.total >= 100 && !state.achievements.persistent) { state.achievements.persistent = true; unlocked = true; }
+            if (state.streak >= 5 && !state.achievements.streak5) { state.achievements.streak5 = true; unlocked = true; }
+            if (state.wins.god >= 1 && !state.achievements.master) { state.achievements.master = true; unlocked = true; }
+            const lv = levels[state.level], opt = Math.ceil(Math.log2(lv.max));
+            if (state.attempts <= opt && state.guesses.includes(state.target) && !state.achievements.efficient) {
+                state.achievements.efficient = true; unlocked = true;
+            }
+            if (state.total >= 50 && Math.random() < 0.05 && !state.achievements.lucky) {
+                state.achievements.lucky = true; unlocked = true;
+            }
+            if (unlocked) { playSound('achievement'); renderAchievements(); save(); }
+        }
+        
+        function confetti() {
+            const colors = ['#3B82F6','#10B981','#F59E0B','#EF4444','#8B5CF6'];
+            for (let i = 0; i < 50; i++) {
+                setTimeout(() => {
+                    const c = document.createElement('div');
+                    c.style.cssText = `position:fixed;width:10px;height:10px;left:${Math.random()*window.innerWidth}px;top:-10px;background:${colors[Math.floor(Math.random()*colors.length)]};animation:fall ${2+Math.random()*2}s linear forwards;pointer-events:none`;
+                    document.body.appendChild(c);
+                    setTimeout(() => c.remove(), 4000);
+                }, i * 30);
+            }
+        }
+        
+        function playSound(type) {
+            if (!state.sound) return;
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = ctx.createOscillator(), gain = ctx.createGain();
+            osc.connect(gain); gain.connect(ctx.destination);
+            const freqs = {win: [523.25, 659.25, 783.99], wrong: 200, click: 400, achievement: 880, start: 440, error: 150};
+            if (type === 'win') {
+                freqs.win.forEach((f, i) => {
+                    setTimeout(() => {
+                        const o = ctx.createOscillator(), g = ctx.createGain();
+                        o.connect(g); g.connect(ctx.destination);
+                        o.frequency.value = f;
+                        g.gain.setValueAtTime(0.2, ctx.currentTime);
+                        g.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+                        o.start(); o.stop(ctx.currentTime + 0.3);
+                    }, i * 100);
+                });
+                return;
+            }
+            osc.frequency.value = freqs[type] || 440;
+            gain.gain.setValueAtTime(0.2, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
+            osc.start(); osc.stop(ctx.currentTime + 0.2);
+        }
+        
+        function toggleSound() {
+            state.sound = !state.sound;
+            document.getElementById('sound').textContent = state.sound ? '🔊' : '🔇';
+            save(); playSound('click');
+        }
+        
+        function showHelp() { document.getElementById('helpModal').classList.add('active'); playSound('click'); }
+        function showDonate() { document.getElementById('donateModal').classList.add('active'); playSound('click'); }
+        function closeModal(id) { document.getElementById(id).classList.remove('active'); playSound('click'); }
+        function payUPI() { window.location.href = 'upi://pay?pa=7841811323@omni&pn=NumberQuest&tn=Support&cu=INR'; }
+        
+        document.querySelectorAll('.modal').forEach(m => {
+            m.addEventListener('click', e => { if (e.target === m) closeModal(m.id); });
+        });
+        
+        document.getElementById('input').addEventListener('keypress', e => {
+            if (e.key === 'Enter') guess();
+        });
+        
+        const style = document.createElement('style');
+        style.textContent = '@keyframes fall { to { transform: translateY(100vh) rotate(720deg); opacity: 0; } }';
+        document.head.appendChild(style);
+
+        const upiId = "upi://pay?pa=7841811323@omni&pn=Payment";
+
+    new QRCode(document.getElementById("qrcode"), {
+      text: upiId,
+      width: 200,
+      height: 200
+    });
+        
+        window.onload = init;
+    </script>
+</body>
+</html>
